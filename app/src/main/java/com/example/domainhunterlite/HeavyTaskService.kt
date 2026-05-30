@@ -16,7 +16,6 @@ class HeavyTaskService : Service() {
 
     private var job: Job? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private lateinit var db: AppDatabase
     private var startTime = 0L
     private var currentRequest = 0
     private val TOTAL_REQUESTS = 100
@@ -66,7 +65,6 @@ class HeavyTaskService : Service() {
                 progress = i
                 
                 try {
-                    // طلب HTTP ثقيل مع تأخير متعمد
                     val request = Request.Builder()
                         .url("https://httpbin.org/delay/0.5")
                         .build()
@@ -79,16 +77,13 @@ class HeavyTaskService : Service() {
                     // نستمر حتى لو فشل الطلب
                 }
                 
-                // تحديث الإشعار
                 withContext(Dispatchers.Main) {
                     updateNotification()
                 }
                 
-                // تأخير بسيط
                 delay(100)
             }
             
-            // اكتملت المهمة
             isRunning = false
             withContext(Dispatchers.Main) {
                 updateNotification()
