@@ -38,75 +38,36 @@ public class MainActivity extends AppCompatActivity {
     private String filePath = null;
     private List<ClassifiedDomain> resultsList = new ArrayList<>();
     
-    private ActivityResultLauncher<String[]> filePicker = registerForActivityResult(
-        new ActivityResultContracts.OpenDocument(),
-        uri -> {
-            if (uri == null) return;
-            try {
-                String fileName = getFileName(uri);
-                File file = new File(getCacheDir(), fileName);
-                InputStream input = getContentResolver().openInputStream(uri);
-                OutputStream output = new FileOutputStream(file);
-                byte[] buffer = new byte[8192];
-                int length;
-                while ((length = input.read(buffer)) > 0) {
-                    output.write(buffer, 0, length);
-                }
-                input.close();
-                output.close();
-                filePath = file.getAbsolutePath();
-                tvFileName.setText(fileName);
-                btnStart.setEnabled(true);
-            } catch (Exception e) {
-                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        }
-    );
-    
-    private BroadcastReceiver updateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            int progress = intent.getIntExtra("progress", 0);
-            int total = intent.getIntExtra("total", 0);
-            int empty = intent.getIntExtra("empty", 0);
-            int parked = intent.getIntExtra("parked", 0);
-            int active = intent.getIntExtra("active", 0);
-            
-            tvProgress.setText(progress + " / " + total);
-            tvEmpty.setText("📄 " + empty);
-            tvParked.setText("💰 " + parked);
-            tvActive.setText("🌐 " + active);
-            tvResultCount.setText(resultsList.size() + " results");
-            progressBar.setMax(total);
-            progressBar.setProgress(progress);
-            
-            ArrayList<ClassifiedDomain> results = (ArrayList<ClassifiedDomain>) intent.getSerializableExtra("results");
-            if (results != null) {
-                resultsList.clear();
-                resultsList.addAll(results);
-                adapter.submitList(new ArrayList<>(resultsList));
-            }
-        }
-    };
-    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         
-        tvFileName = findViewById(R.id.tvFileName);
-        tvProgress = findViewById(R.id.tvProgress);
-        tvEmpty = findViewById(R.id.tvEmpty);
-        tvParked = findViewById(R.id.tvParked);
-        tvActive = findViewById(R.id.tvActive);
-        tvResultCount = findViewById(R.id.tvResultCount);
-        progressBar = findViewById(R.id.progressBar);
-        btnImport = findViewById(R.id.btnImport);
-        btnStart = findViewById(R.id.btnStart);
-        btnStop = findViewById(R.id.btnStop);
-        btnExport = findViewById(R.id.btnExport);
-        recyclerView = findViewById(R.id.recyclerView);
+        try {
+            setContentView(R.layout.activity_main);
+            
+            // تهيئة العناصر
+            tvFileName = findViewById(R.id.tvFileName);
+            tvProgress = findViewById(R.id.tvProgress);
+            tvEmpty = findViewById(R.id.tvEmpty);
+            tvParked = findViewById(R.id.tvParked);
+            tvActive = findViewById(R.id.tvActive);
+            tvResultCount = findViewById(R.id.tvResultCount);
+            progressBar = findViewById(R.id.progressBar);
+            btnImport = findViewById(R.id.btnImport);
+            btnStart = findViewById(R.id.btnStart);
+            btnStop = findViewById(R.id.btnStop);
+            btnExport = findViewById(R.id.btnExport);
+            recyclerView = findViewById(R.id.recyclerView);
+            
+            Toast.makeText(this, "App started successfully", Toast.LENGTH_SHORT).show();
+            
+        } catch (Exception e) {
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+            return;
+        }
         
+        // طلب إذن الإشعارات
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -154,6 +115,57 @@ public class MainActivity extends AppCompatActivity {
         
         LocalBroadcastManager.getInstance(this).registerReceiver(updateReceiver, new IntentFilter("SCAN_UPDATE"));
     }
+    
+    private final ActivityResultLauncher<String[]> filePicker = registerForActivityResult(
+        new ActivityResultContracts.OpenDocument(),
+        uri -> {
+            if (uri == null) return;
+            try {
+                String fileName = getFileName(uri);
+                File file = new File(getCacheDir(), fileName);
+                InputStream input = getContentResolver().openInputStream(uri);
+                OutputStream output = new FileOutputStream(file);
+                byte[] buffer = new byte[8192];
+                int length;
+                while ((length = input.read(buffer)) > 0) {
+                    output.write(buffer, 0, length);
+                }
+                input.close();
+                output.close();
+                filePath = file.getAbsolutePath();
+                tvFileName.setText(fileName);
+                btnStart.setEnabled(true);
+            } catch (Exception e) {
+                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
+    );
+    
+    private final BroadcastReceiver updateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int progress = intent.getIntExtra("progress", 0);
+            int total = intent.getIntExtra("total", 0);
+            int empty = intent.getIntExtra("empty", 0);
+            int parked = intent.getIntExtra("parked", 0);
+            int active = intent.getIntExtra("active", 0);
+            
+            tvProgress.setText(progress + " / " + total);
+            tvEmpty.setText("📄 " + empty);
+            tvParked.setText("💰 " + parked);
+            tvActive.setText("🌐 " + active);
+            tvResultCount.setText(resultsList.size() + " results");
+            progressBar.setMax(total);
+            progressBar.setProgress(progress);
+            
+            ArrayList<ClassifiedDomain> results = (ArrayList<ClassifiedDomain>) intent.getSerializableExtra("results");
+            if (results != null) {
+                resultsList.clear();
+                resultsList.addAll(results);
+                adapter.submitList(new ArrayList<>(resultsList));
+            }
+        }
+    };
     
     private String getFileName(Uri uri) {
         String name = "domains.txt";
