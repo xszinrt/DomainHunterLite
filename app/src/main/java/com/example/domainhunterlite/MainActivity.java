@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,7 +33,8 @@ public class MainActivity extends AppCompatActivity {
     
     private TextView tvFileName, tvProgress, tvEmpty, tvParked, tvActive, tvResultCount;
     private ProgressBar progressBar;
-    private Button btnImport, btnStart, btnStop, btnExport;
+    private Button btnImport, btnStart, btnStop;
+    private ImageButton btnExport;  // ✅ ImageButton وليس Button
     private RecyclerView recyclerView;
     private DomainAdapter adapter;
     private String filePath = null;
@@ -56,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
             btnImport = findViewById(R.id.btnImport);
             btnStart = findViewById(R.id.btnStart);
             btnStop = findViewById(R.id.btnStop);
-            btnExport = findViewById(R.id.btnExport);
+            btnExport = findViewById(R.id.btnExport);  // ✅ ImageButton
             recyclerView = findViewById(R.id.recyclerView);
             
             Toast.makeText(this, "App started successfully", Toast.LENGTH_SHORT).show();
