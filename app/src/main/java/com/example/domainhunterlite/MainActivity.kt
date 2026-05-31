@@ -1,26 +1,72 @@
 package com.example.domainhunterlite
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.domainhunterlite.databinding.ActivityMainBinding
-import kotlinx.coroutines.*
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private var updateJob: Job? = null
+    private val adapter = DomainAdapter()
+    private var filePath: String? = null
+    private val resultsList = mutableListOf<ClassifiedDomain>()
 
-    private val notifPermission = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) {}
+    private val filePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri ?: return@registerForActivityResult
+        try {
+            val fileName = getFileName(uri)
+            val file = File(cacheDir, fileName)
+            contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(file).use { output -> input.copyTo(output) }
+            }
+            filePath = file.absolutePath
+            binding.tvFileName.text = file
+            binding.btnStart.isEnabled = true
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private val updateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val progress = intent.getIntExtra("progress", 0)
+            val total = intent.getIntExtra("total", 0)
+            val empty = intent.getIntExtra("empty", 0)
+            val parked = intent.getIntExtra("parked", 0)
+            val active = intent.getIntExtra("active", 0)
+            
+            binding.tvProgress.text = "$progress / $total"
+            binding.tvEmpty.text = "📄 $empty"
+            binding.tvParked.text = "💰 $parked"
+            binding.tvActive.text = "🌐 $active"
+            binding.tvResultCount.text = "${resultsList.size} results"
+            binding.progressBar.max = total
+            binding.progressBar.progress = progress
+            
+            @Suppress("UNCHECKED_CAST")
+            val results = intent.getSerializableExtra("results") as? ArrayList<ClassifiedDomain>
+            results?.let {
+                resultsList.clear()
+                resultsList.addAll(it)
+                adapter.submitList(resultsList.toList())
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,60 +76,90 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
-                notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
+        }
+
+        binding.recyclerView.layoutManager = LinearLayoutManager(this)
+        binding.recyclerView.adapter = adapter
+
+        binding.btnImport.setOnClickListener {
+            filePicker.launch(arrayOf("text/plain", "text/csv", "*/*"))
         }
 
         binding.btnStart.setOnClickListener {
-            startTask()
+            if (filePath == null) {
+                Toast.makeText(this, "Select a file first!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val intent = Intent(this, ScanService::class.java).apply {
+                putExtra(ScanService.EXTRA_FILE_PATH, filePath)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+            binding.btnStart.isEnabled = false
+            binding.btnStop.isEnabled = true
         }
 
         binding.btnStop.setOnClickListener {
-            stopTask()
+            startService(Intent(this, ScanService::class.java).apply {
+                action = ScanService.ACTION_STOP
+            })
+            binding.btnStart.isEnabled = true
+            binding.btnStop.isEnabled = false
         }
 
-        startUpdater()
-    }
-
-    private fun startTask() {
-        val intent = Intent(this, HeavyTaskService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
+        binding.btnExport.setOnClickListener {
+            if (resultsList.isEmpty()) {
+                Toast.makeText(this, "No results to export!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            exportResults()
         }
-        binding.btnStart.isEnabled = false
-        binding.btnStop.isEnabled = true
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(updateReceiver, IntentFilter("SCAN_UPDATE"))
     }
 
-    private fun stopTask() {
-        val intent = Intent(this, HeavyTaskService::class.java).apply {
-            action = HeavyTaskService.ACTION_STOP
-        }
-        startService(intent)
-        binding.btnStart.isEnabled = true
-        binding.btnStop.isEnabled = false
-    }
-
-    private fun startUpdater() {
-        updateJob = CoroutineScope(Dispatchers.Main).launch {
-            while (true) {
-                val running = HeavyTaskService.isRunning
-                val progress = HeavyTaskService.progress
-                
-                binding.tvStatus.text = if (running) "🟢 Running..." else if (progress >= 100) "✅ Completed" else "⏹ Stopped"
-                binding.tvProgress.text = "$progress / 100"
-                
-                binding.btnStart.isEnabled = !running
-                binding.btnStop.isEnabled = running
-                
-                delay(500)
+    private fun getFileName(uri: Uri): String {
+        var name = "domains.txt"
+        contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (idx >= 0) name = cursor.getString(idx)
             }
         }
+        return name
     }
+
+    private fun exportResults() {
+        val file = File(cacheDir, "results.csv")
+        file.bufferedWriter().use { writer ->
+            writer.write("Domain,Type\n")
+            resultsList.forEach {
+                writer.write("${it.domain},${it.type}\n")
+            }
+        }
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/csv"
+            putExtra(Intent.EXTRA_STREAM, androidx.core.content.FileProvider.getUriForFile(
+                this@MainActivity,
+                "${packageName}.provider",
+                file
+            ))
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivity(Intent.createChooser(intent, "Export Results"))
+    }
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
 
     override fun onDestroy() {
         super.onDestroy()
-        updateJob?.cancel()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(updateReceiver)
     }
 }

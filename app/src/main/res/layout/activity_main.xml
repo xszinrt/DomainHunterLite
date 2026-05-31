@@ -1,84 +1,217 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/bg_primary"
-    android:padding="16dp"
-    android:gravity="center">
+    android:padding="8dp">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🧪 Heavy Task Test"
-        android:textSize="24sp"
+        android:text="Domain Hunter"
+        android:textSize="20sp"
         android:textColor="@color/accent"
         android:textStyle="bold"
-        android:layout_marginBottom="32dp" />
+        android:padding="8dp" />
 
-    <TextView
-        android:id="@+id/tvStatus"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Ready"
-        android:textColor="@color/text_primary"
-        android:textSize="16sp"
-        android:gravity="center"
-        android:layout_marginBottom="16dp" />
+        app:cardBackgroundColor="@color/bg_secondary"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        android:layout_marginBottom="8dp">
 
-    <TextView
-        android:id="@+id/tvProgress"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <Button
+                android:id="@+id/btnImport"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:text="Import File"
+                android:textSize="12sp"
+                android:backgroundTint="@color/accent"
+                android:textColor="@color/white" />
+
+            <TextView
+                android:id="@+id/tvFileName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No file selected"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:paddingTop="8dp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="0 / 100"
-        android:textColor="@color/text_secondary"
-        android:textSize="14sp"
-        android:gravity="center"
-        android:layout_marginBottom="8dp" />
+        app:cardBackgroundColor="@color/bg_secondary"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        android:layout_marginBottom="8dp">
 
-    <TextView
-        android:id="@+id/tvTime"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="6dp">
+                <TextView
+                    android:id="@+id/tvProgress"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="0 / 0"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp" />
+                <TextView
+                    android:id="@+id/tvEta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ETA: --"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:progressTint="@color/accent"
+                android:max="100"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/tvEmpty"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="📄 0"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+                <TextView
+                    android:id="@+id/tvParked"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="💰 0"
+                    android:textColor="@color/warning"
+                    android:textSize="11sp"
+                    android:gravity="center" />
+                <TextView
+                    android:id="@+id/tvActive"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="🌐 0"
+                    android:textColor="@color/success"
+                    android:textSize="11sp"
+                    android:gravity="end" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Elapsed: 0s"
-        android:textColor="@color/text_secondary"
-        android:textSize="12sp"
-        android:gravity="center"
-        android:layout_marginBottom="24dp" />
+        app:cardBackgroundColor="@color/bg_secondary"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/btnStop"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:text="Stop"
+                android:textSize="12sp"
+                android:backgroundTint="@color/error"
+                android:textColor="@color/white"
+                android:layout_marginEnd="6dp"
+                android:enabled="false" />
+
+            <Button
+                android:id="@+id/btnPause"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:text="Pause"
+                android:textSize="12sp"
+                android:backgroundTint="@color/warning"
+                android:textColor="@color/black"
+                android:layout_marginEnd="6dp"
+                android:enabled="false" />
+
+            <Button
+                android:id="@+id/btnStart"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:text="Start"
+                android:textSize="12sp"
+                android:backgroundTint="@color/success"
+                android:textColor="@color/white"
+                android:enabled="false" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_marginBottom="6dp"
+        android:gravity="center_vertical">
 
-        <Button
-            android:id="@+id/btnStart"
+        <TextView
+            android:id="@+id/tvResultCount"
             android:layout_width="0dp"
-            android:layout_height="56dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="▶ Start"
-            android:textSize="16sp"
-            android:backgroundTint="@color/success"
-            android:layout_marginEnd="8dp" />
+            android:text="0 results"
+            android:textColor="@color/text_primary"
+            android:textSize="11sp" />
 
-        <Button
-            android:id="@+id/btnStop"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_weight="1"
-            android:text="⏹ Stop"
-            android:textSize="16sp"
-            android:backgroundTint="@color/error"
-            android:enabled="false" />
+        <ImageButton
+            android:id="@+id/btnExport"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@android:drawable/ic_menu_save"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:tint="@color/accent"
+            android:padding="4dp" />
     </LinearLayout>
 
-    <TextView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="⚠️ This test makes 100 HTTP requests\nObserve the notification speed"
-        android:textColor="@color/warning"
-        android:textSize="11sp"
-        android:gravity="center"
-        android:layout_marginTop="24dp" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
 </LinearLayout>
