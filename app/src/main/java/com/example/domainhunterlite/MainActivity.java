@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -156,22 +157,24 @@ public class MainActivity extends AppCompatActivity {
     
     private String getFileName(Uri uri) {
         String name = "domains.txt";
-        try (var cursor = getContentResolver().query(uri, null, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                int idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
-                if (idx >= 0) name = cursor.getString(idx);
-            }
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            int idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+            if (idx >= 0) name = cursor.getString(idx);
+            cursor.close();
         }
         return name;
     }
     
     private void exportResults() {
         File file = new File(getCacheDir(), "results.csv");
-        try (java.io.FileWriter writer = new java.io.FileWriter(file)) {
+        try {
+            java.io.FileWriter writer = new java.io.FileWriter(file);
             writer.write("Domain,Type\n");
             for (ClassifiedDomain domain : resultsList) {
                 writer.write(domain.domain + "," + domain.type + "\n");
             }
+            writer.close();
         } catch (Exception e) {
             Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             return;
