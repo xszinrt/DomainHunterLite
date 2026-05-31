@@ -28,14 +28,14 @@ object RdapFetcher {
                 .build()
             
             val response = client.newCall(request).execute()
-            // ✅ الحل النهائي: استخدام elvis operator لتوفير قيمة افتراضية
-            val body = response.body?.string() ?: ""
+            // ✅ التصحيح: استخدام ?: ""
+            val body = response.body?.string()
             
             RdapResult(
                 domain = domain,
                 exists = response.code == 200,
                 statusCode = response.code,
-                html = body,
+                html = body ?: "",
                 contentType = response.header("Content-Type", "")
             )
         } catch (e: Exception) {
