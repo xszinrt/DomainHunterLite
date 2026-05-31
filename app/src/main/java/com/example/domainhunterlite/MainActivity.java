@@ -22,15 +22,17 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     
-    private ActivityMainBinding binding;
+    private TextView tvFileName, tvProgress, tvEmpty, tvParked, tvActive, tvResultCount;
+    private ProgressBar progressBar;
+    private Button btnImport, btnStart, btnStop, btnExport;
+    private RecyclerView recyclerView;
     private DomainAdapter adapter;
     private String filePath = null;
     private List<ClassifiedDomain> resultsList = new ArrayList<>();
@@ -42,18 +44,18 @@ public class MainActivity extends AppCompatActivity {
             try {
                 String fileName = getFileName(uri);
                 File file = new File(getCacheDir(), fileName);
-                getContentResolver().openInputStream(uri).use(input -> {
-                    new FileOutputStream(file).use(output -> {
-                        byte[] buffer = new byte[8192];
-                        int length;
-                        while ((length = input.read(buffer)) > 0) {
-                            output.write(buffer, 0, length);
-                        }
-                    });
-                });
+                InputStream input = getContentResolver().openInputStream(uri);
+                OutputStream output = new FileOutputStream(file);
+                byte[] buffer = new byte[8192];
+                int length;
+                while ((length = input.read(buffer)) > 0) {
+                    output.write(buffer, 0, length);
+                }
+                input.close();
+                output.close();
                 filePath = file.getAbsolutePath();
-                binding.tvFileName.setText(fileName);
-                binding.btnStart.setEnabled(true);
+                tvFileName.setText(fileName);
+                btnStart.setEnabled(true);
             } catch (Exception e) {
                 Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
@@ -69,13 +71,13 @@ public class MainActivity extends AppCompatActivity {
             int parked = intent.getIntExtra("parked", 0);
             int active = intent.getIntExtra("active", 0);
             
-            binding.tvProgress.setText(progress + " / " + total);
-            binding.tvEmpty.setText("📄 " + empty);
-            binding.tvParked.setText("💰 " + parked);
-            binding.tvActive.setText("🌐 " + active);
-            binding.tvResultCount.setText(resultsList.size() + " results");
-            binding.progressBar.setMax(total);
-            binding.progressBar.setProgress(progress);
+            tvProgress.setText(progress + " / " + total);
+            tvEmpty.setText("📄 " + empty);
+            tvParked.setText("💰 " + parked);
+            tvActive.setText("🌐 " + active);
+            tvResultCount.setText(resultsList.size() + " results");
+            progressBar.setMax(total);
+            progressBar.setProgress(progress);
             
             ArrayList<ClassifiedDomain> results = (ArrayList<ClassifiedDomain>) intent.getSerializableExtra("results");
             if (results != null) {
@@ -89,8 +91,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_main);
+        
+        tvFileName = findViewById(R.id.tvFileName);
+        tvProgress = findViewById(R.id.tvProgress);
+        tvEmpty = findViewById(R.id.tvEmpty);
+        tvParked = findViewById(R.id.tvParked);
+        tvActive = findViewById(R.id.tvActive);
+        tvResultCount = findViewById(R.id.tvResultCount);
+        progressBar = findViewById(R.id.progressBar);
+        btnImport = findViewById(R.id.btnImport);
+        btnStart = findViewById(R.id.btnStart);
+        btnStop = findViewById(R.id.btnStop);
+        btnExport = findViewById(R.id.btnExport);
+        recyclerView = findViewById(R.id.recyclerView);
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -99,15 +113,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new DomainAdapter();
-        binding.recyclerView.setAdapter(adapter);
+        recyclerView.setAdapter(adapter);
         
-        binding.btnImport.setOnClickListener(v -> {
+        btnImport.setOnClickListener(v -> {
             filePicker.launch(new String[]{"text/plain", "text/csv", "*/*"});
         });
         
-        binding.btnStart.setOnClickListener(v -> {
+        btnStart.setOnClickListener(v -> {
             if (filePath == null) {
                 Toast.makeText(this, "Select a file first!", Toast.LENGTH_SHORT).show();
                 return;
@@ -119,17 +133,17 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 startService(intent);
             }
-            binding.btnStart.setEnabled(false);
-            binding.btnStop.setEnabled(true);
+            btnStart.setEnabled(false);
+            btnStop.setEnabled(true);
         });
         
-        binding.btnStop.setOnClickListener(v -> {
+        btnStop.setOnClickListener(v -> {
             startService(new Intent(this, ScanService.class).setAction(ScanService.ACTION_STOP));
-            binding.btnStart.setEnabled(true);
-            binding.btnStop.setEnabled(false);
+            btnStart.setEnabled(true);
+            btnStop.setEnabled(false);
         });
         
-        binding.btnExport.setOnClickListener(v -> {
+        btnExport.setOnClickListener(v -> {
             if (resultsList.isEmpty()) {
                 Toast.makeText(this, "No results to export!", Toast.LENGTH_SHORT).show();
                 return;
@@ -158,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
             for (ClassifiedDomain domain : resultsList) {
                 writer.write(domain.domain + "," + domain.type + "\n");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             return;
         }
