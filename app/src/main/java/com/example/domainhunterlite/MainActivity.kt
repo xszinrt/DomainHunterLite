@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
                 FileOutputStream(file).use { output -> input.copyTo(output) }
             }
             filePath = file.absolutePath
-            binding.tvFileName.text = file
+            binding.tvFileName.text = fileName  // ✅ إصلاح: String وليس File
             binding.btnStart.isEnabled = true
         } catch (e: Exception) {
             Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()

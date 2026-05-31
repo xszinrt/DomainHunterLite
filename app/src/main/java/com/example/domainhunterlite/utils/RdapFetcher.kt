@@ -2,7 +2,6 @@ package com.example.domainhunterlite.utils
 
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 data class RdapResult(
@@ -29,7 +28,7 @@ object RdapFetcher {
                 .build()
             
             val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: ""
+            val body = response.body?.string() ?: ""  // ✅ إصلاح: استخدام ?: "" بدلاً من !!
             
             RdapResult(
                 domain = domain,
