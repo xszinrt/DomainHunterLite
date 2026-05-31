@@ -28,7 +28,8 @@ object RdapFetcher {
                 .build()
             
             val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: ""  // ✅ إصلاح: استخدام ?: "" بدلاً من !!
+            // ✅ الحل النهائي: استخدام elvis operator لتوفير قيمة افتراضية
+            val body = response.body?.string() ?: ""
             
             RdapResult(
                 domain = domain,
